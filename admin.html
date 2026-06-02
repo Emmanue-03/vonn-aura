@@ -1,0 +1,1342 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Vonn Aura — Atelier · Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --color-principal: #F8ECE7;
+    --color-secundario: #702633;
+    --color-card: #FFF8F5;
+    --color-borde: rgba(112, 38, 51, 0.18);
+    --color-muted: rgba(112, 38, 51, 0.68);
+    --color-soft: rgba(112, 38, 51, 0.06);
+    --color-soft-2: rgba(112, 38, 51, 0.12);
+    --ok: #2f7a4d;
+    --warn: #b8770b;
+    --bad: #a3303a;
+    --info: #5a4ca8;
+
+    --font-title: 'EB Garamond', Georgia, serif;
+    --font-ui: 'Inter', Arial, sans-serif;
+
+    --radius-card: 22px;
+    --radius-pill: 999px;
+    --radius-input: 12px;
+    --shadow-soft: 0 18px 50px rgba(112, 38, 51, 0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--color-principal); color: var(--color-secundario); font-family: var(--font-ui); -webkit-font-smoothing: antialiased; font-size: 14px; }
+  body { min-height: 100vh; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+  input, select, textarea { font-family: inherit; }
+  ::selection { background: var(--color-secundario); color: var(--color-principal); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(112,38,51,.22); border-radius: 999px; }
+
+  /* LAYOUT */
+  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+  .sidebar { background: var(--color-card); border-right: 1px solid var(--color-borde); padding: 22px 16px; position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 18px; overflow-y: auto; }
+  .brand { font-family: var(--font-title); font-size: 22px; letter-spacing: .1em; text-transform: uppercase; color: var(--color-secundario); padding: 6px 8px; }
+  .brand .it { font-style: italic; font-weight: 500; text-transform: lowercase; letter-spacing: 0; }
+  .brand small { display: block; font-family: var(--font-ui); font-size: 9px; letter-spacing: .35em; margin-top: 4px; color: var(--color-muted); }
+
+  .nav-section { display: flex; flex-direction: column; gap: 4px; }
+  .nav-section h6 { font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--color-muted); padding: 14px 12px 6px; font-weight: 500; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; color: var(--color-secundario); font-size: 12.5px; font-weight: 500; transition: background .25s, color .25s; border: 1px solid transparent; }
+  .nav-item:hover { background: var(--color-soft); }
+  .nav-item.active { background: var(--color-secundario); color: var(--color-principal); }
+  .nav-item .ico { width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; opacity: .9; }
+  .nav-item .count { margin-left: auto; font-size: 10px; padding: 2px 8px; border-radius: 999px; background: var(--color-soft-2); color: var(--color-secundario); font-weight: 600; }
+  .nav-item.active .count { background: rgba(248,236,231,.18); color: var(--color-principal); }
+
+  .sidebar-foot { margin-top: auto; padding: 16px 12px 6px; border-top: 1px solid var(--color-borde); font-size: 11px; color: var(--color-muted); }
+
+  /* MAIN */
+  .main { display: flex; flex-direction: column; min-width: 0; }
+  .topbar { display: flex; align-items: center; gap: 16px; padding: 18px 28px; border-bottom: 1px solid var(--color-borde); background: rgba(248,236,231,.84); backdrop-filter: blur(8px); position: sticky; top: 0; z-index: 10; }
+  .crumbs { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--color-muted); }
+  .crumbs strong { color: var(--color-secundario); font-weight: 600; }
+  .search { margin-left: auto; display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--color-card); border: 1px solid var(--color-borde); border-radius: var(--radius-pill); width: 320px; max-width: 40vw; }
+  .search input { border: 0; outline: 0; background: transparent; flex: 1; color: var(--color-secundario); font-size: 13px; }
+  .search input::placeholder { color: var(--color-muted); }
+  .icon-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--color-borde); background: var(--color-card); display: inline-flex; align-items: center; justify-content: center; color: var(--color-secundario); transition: background .25s; position: relative; }
+  .icon-btn:hover { background: var(--color-soft); }
+  .icon-btn .dot { position: absolute; top: 8px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--color-secundario); }
+  .user-chip { display: flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border: 1px solid var(--color-borde); border-radius: var(--radius-pill); background: var(--color-card); }
+  .user-chip .av { width: 32px; height: 32px; border-radius: 50%; background: var(--color-secundario); color: var(--color-principal); display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-title); font-style: italic; font-weight: 500; font-size: 14px; }
+  .user-chip .name { font-size: 12px; font-weight: 600; line-height: 1.1; }
+  .user-chip .role { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--color-muted); }
+
+  .view { padding: 28px 28px 80px; display: flex; flex-direction: column; gap: 26px; }
+  .view-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+  .view-head h1 { font-family: var(--font-title); font-size: 42px; font-weight: 500; line-height: 1; letter-spacing: -.01em; }
+  .view-head h1 .it { font-style: italic; }
+  .view-head p { color: var(--color-muted); margin-top: 8px; max-width: 540px; line-height: 1.6; }
+
+  /* BOTONES */
+  .btn { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; padding: 12px 22px; border-radius: var(--radius-pill); border: 1px solid transparent; transition: all .3s; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; }
+  .btn-primary { background: var(--color-secundario); color: var(--color-principal); border-color: var(--color-secundario); }
+  .btn-primary:hover { background: #5a1d29; }
+  .btn-ghost { background: transparent; color: var(--color-secundario); border-color: var(--color-secundario); }
+  .btn-ghost:hover { background: var(--color-secundario); color: var(--color-principal); }
+  .btn-soft { background: var(--color-soft); color: var(--color-secundario); }
+  .btn-soft:hover { background: var(--color-soft-2); }
+  .btn-danger { background: transparent; color: var(--bad); border-color: rgba(163,48,58,.4); }
+  .btn-danger:hover { background: var(--bad); color: #fff; border-color: var(--bad); }
+  .btn-mini { padding: 7px 12px; font-size: 10px; letter-spacing: .14em; }
+
+  /* CARDS / PANELS */
+  .panel { background: var(--color-card); border: 1px solid var(--color-borde); border-radius: var(--radius-card); padding: 26px; }
+  .panel.lg { padding: 32px; }
+  .panel h3 { font-family: var(--font-title); font-size: 22px; font-weight: 500; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+  .panel-head .lbl { font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--color-muted); }
+
+  /* STATS GRID */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .stat { background: var(--color-card); border: 1px solid var(--color-borde); border-radius: var(--radius-card); padding: 24px; display: flex; flex-direction: column; gap: 14px; min-height: 140px; transition: transform .35s ease, box-shadow .35s ease; }
+  .stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-soft); }
+  .stat .top { display: flex; justify-content: space-between; align-items: center; }
+  .stat .lbl { font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: var(--color-muted); }
+  .stat .ico { width: 36px; height: 36px; border-radius: 12px; background: var(--color-soft); display: inline-flex; align-items: center; justify-content: center; color: var(--color-secundario); }
+  .stat .num { font-family: var(--font-title); font-size: 38px; font-weight: 500; line-height: 1; }
+  .stat .delta { font-size: 11px; color: var(--color-muted); display: flex; align-items: center; gap: 6px; }
+  .stat .delta.up { color: var(--ok); }
+  .stat .delta.down { color: var(--bad); }
+
+  /* GRID 2 COL */
+  .grid-2 { display: grid; grid-template-columns: 1.5fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+
+  /* CHART CSS bars */
+  .chart { display: flex; align-items: flex-end; gap: 14px; height: 200px; padding: 12px 0 6px; border-bottom: 1px solid var(--color-borde); }
+  .bar { flex: 1; background: linear-gradient(180deg, var(--color-secundario), #5a1d29); border-radius: 8px 8px 0 0; position: relative; min-height: 4px; transition: opacity .3s; cursor: pointer; }
+  .bar:hover { opacity: .8; }
+  .bar .v { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 11px; color: var(--color-secundario); font-weight: 600; white-space: nowrap; }
+  .chart-x { display: flex; gap: 14px; padding: 10px 0 0; }
+  .chart-x span { flex: 1; text-align: center; font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--color-muted); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 880px; table-layout: auto; }
+  th, td { text-align: left; padding: 12px 14px; font-size: 13px; vertical-align: middle; }
+  th { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: var(--color-muted); font-weight: 500; border-bottom: 1px solid var(--color-borde); background: rgba(112,38,51,.02); white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--color-borde); transition: background .25s; }
+  tbody tr:hover { background: var(--color-soft); }
+  tbody tr:last-child { border-bottom: 0; }
+  td .name { font-family: var(--font-title); font-size: 16px; font-weight: 500; line-height: 1.2; }
+  td .sub { font-size: 11px; color: var(--color-muted); margin-top: 2px; }
+  td:nth-child(2) { min-width: 220px; }
+  .thumb { width: 40px; height: 40px; border-radius: 10px; background: var(--color-soft); display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-title); font-style: italic; color: var(--color-secundario); font-size: 16px; border: 1px solid var(--color-borde); flex-shrink: 0; }
+
+  /* TAGS / BADGES */
+  .tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; background: var(--color-soft); color: var(--color-secundario); border: 1px solid var(--color-borde); }
+  .tag.ok { background: rgba(47,122,77,.10); color: var(--ok); border-color: rgba(47,122,77,.25); }
+  .tag.warn { background: rgba(184,119,11,.10); color: var(--warn); border-color: rgba(184,119,11,.25); }
+  .tag.bad { background: rgba(163,48,58,.10); color: var(--bad); border-color: rgba(163,48,58,.25); }
+  .tag.info { background: rgba(90,76,168,.10); color: var(--info); border-color: rgba(90,76,168,.25); }
+  .tag .d { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* PILLS / FILTERS */
+  .pill-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--color-borde); background: var(--color-card); color: var(--color-secundario); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; transition: all .3s; }
+  .pill:hover { border-color: var(--color-secundario); }
+  .pill.active { background: var(--color-secundario); color: var(--color-principal); border-color: var(--color-secundario); }
+
+  /* INPUTS */
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 10px; letter-spacing: .25em; text-transform: uppercase; color: var(--color-muted); font-weight: 500; }
+  .field input, .field select, .field textarea { background: var(--color-principal); border: 1px solid var(--color-borde); border-radius: var(--radius-input); padding: 12px 14px; color: var(--color-secundario); font-size: 14px; outline: 0; transition: border-color .25s; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--color-secundario); }
+  .field textarea { min-height: 100px; resize: vertical; font-family: inherit; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid .full { grid-column: 1 / -1; }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(58,18,26,.42); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 24px; }
+  .modal { background: var(--color-principal); border: 1px solid var(--color-borde); border-radius: 26px; padding: 32px; width: 100%; max-width: 680px; max-height: 92vh; overflow-y: auto; box-shadow: 0 40px 100px rgba(58,18,26,.32); }
+  .modal-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+  .modal-head h2 { font-family: var(--font-title); font-size: 28px; font-weight: 500; }
+  .modal-foot { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--color-borde); }
+  .close-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--color-borde); background: transparent; color: var(--color-secundario); font-size: 16px; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--color-secundario); color: var(--color-principal); padding: 16px 22px; border-radius: 14px; font-size: 13px; box-shadow: 0 14px 40px rgba(58,18,26,.32); z-index: 200; animation: toastIn .4s ease; }
+  @keyframes toastIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* ROW actions */
+  .row-actions { display: flex; gap: 6px; }
+  .row-actions button { padding: 6px 10px; font-size: 10px; letter-spacing: .12em; border-radius: 8px; border: 1px solid var(--color-borde); background: transparent; color: var(--color-secundario); text-transform: uppercase; transition: all .25s; }
+  .row-actions button:hover { background: var(--color-secundario); color: var(--color-principal); border-color: var(--color-secundario); }
+  .row-actions button.del:hover { background: var(--bad); border-color: var(--bad); }
+
+  /* EMPTY */
+  .empty { padding: 60px 20px; text-align: center; color: var(--color-muted); }
+  .empty h4 { font-family: var(--font-title); font-size: 22px; color: var(--color-secundario); margin-bottom: 8px; }
+
+  /* LIST item */
+  .list-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--color-borde); }
+  .list-item:last-child { border-bottom: 0; }
+  .list-item .main { flex: 1; min-width: 0; }
+  .list-item .name { font-family: var(--font-title); font-size: 16px; font-weight: 500; }
+  .list-item .meta { font-size: 11px; color: var(--color-muted); letter-spacing: .04em; margin-top: 2px; }
+  .list-item .right { text-align: right; font-size: 13px; color: var(--color-secundario); font-weight: 600; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1024px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 80%; max-width: 320px; transform: translateX(-100%); transition: transform .35s; z-index: 50; box-shadow: 0 20px 60px rgba(58,18,26,.2); }
+    .sidebar.open { transform: translateX(0); }
+    .topbar { padding: 16px 20px; }
+    .search { width: 200px; }
+    .view { padding: 24px 20px 80px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .menu-btn { display: inline-flex !important; }
+  }
+  @media (max-width: 600px) {
+    .view-head h1 { font-size: 32px; }
+    .search { display: none; }
+    .user-chip .name, .user-chip .role { display: none; }
+    .stats { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    th, td { padding: 10px 12px; font-size: 12px; }
+  }
+  .menu-btn { display: none; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useRef } = React;
+
+// -------- STORAGE --------
+const LS = {
+  get(k, fallback) {
+    try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; }
+    catch { return fallback; }
+  },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+// -------- SEED DATA --------
+const seedProducts = [
+  { id: 'P-001', name: 'Rouge Soir',  brand: 'Vonn Aura',         family: 'Floral · Especiado',  notes: 'Azafrán, rosa, iris', size: '100ml', price: 180, stock: 14, status: 'active',  gender: 'mujer',  intensity: 'eau de parfum', occasion: 'noche', featured: true  },
+  { id: 'P-002', name: 'Aura Brûlée', brand: 'Vonn Aura',         family: 'Amaderado · Cuero',   notes: 'Humo, tonka, cuero',  size: '100ml', price: 195, stock: 6,  status: 'active',  gender: 'unisex', intensity: 'extrait',        occasion: 'noche', featured: true  },
+  { id: 'P-003', name: 'Lune de Rose',brand: 'Vonn Aura',         family: 'Floral · Almizclado', notes: 'Damasco, musk',       size: '50ml',  price: 140, stock: 22, status: 'active',  gender: 'mujer',  intensity: 'eau de parfum', occasion: 'dia',   featured: false },
+  { id: 'P-004', name: 'Or Profond',  brand: 'Vonn Aura',         family: 'Oriental · Ámbar',    notes: 'Ámbar, oud, miel',    size: '100ml', price: 220, stock: 3,  status: 'low',     gender: 'unisex', intensity: 'extrait',        occasion: 'noche', featured: true  },
+  { id: 'P-005', name: 'Sang Floral', brand: 'Vonn Aura',         family: 'Floral · Frutal',     notes: 'Tuberosa, ciruela',   size: '50ml',  price: 130, stock: 18, status: 'active',  gender: 'mujer',  intensity: 'eau de parfum', occasion: 'dia',   featured: false },
+  { id: 'P-006', name: 'Ember Noir',  brand: 'Vonn Aura',         family: 'Amaderado · Especias',notes: 'Abedul, pimienta',    size: '100ml', price: 205, stock: 9,  status: 'active',  gender: 'hombre', intensity: 'eau de parfum', occasion: 'noche', featured: false },
+  { id: 'P-007', name: 'Velours',     brand: 'Vonn Aura · Limited',family: 'Floral · Oriental',  notes: 'Iris, ámbar gris',    size: '100ml', price: 260, stock: 0,  status: 'out',     gender: 'unisex', intensity: 'extrait',        occasion: 'noche', featured: true  },
+];
+const seedDecants = [
+  { id: 'D-101', origin: 'Rouge Soir',  ml: 5,  price: 22, stock: 30, status: 'active' },
+  { id: 'D-102', origin: 'Rouge Soir',  ml: 10, price: 38, stock: 18, status: 'active' },
+  { id: 'D-103', origin: 'Aura Brûlée', ml: 5,  price: 24, stock: 12, status: 'active' },
+  { id: 'D-104', origin: 'Aura Brûlée', ml: 10, price: 42, stock: 4,  status: 'low'    },
+  { id: 'D-105', origin: 'Or Profond',  ml: 3,  price: 18, stock: 25, status: 'active' },
+  { id: 'D-106', origin: 'Or Profond',  ml: 5,  price: 28, stock: 9,  status: 'active' },
+  { id: 'D-107', origin: 'Lune de Rose',ml: 5,  price: 19, stock: 36, status: 'active' },
+  { id: 'D-108', origin: 'Ember Noir',  ml: 10, price: 40, stock: 0,  status: 'out'    },
+];
+const seedOrders = [
+  { id: '#VA-2057', customer: 'Camila Rivero',    items: 2, total: 218, status: 'pendiente',  date: '2026-05-27', payment: 'Mercado Pago' },
+  { id: '#VA-2056', customer: 'Luciano Almeida',  items: 1, total: 195, status: 'preparando', date: '2026-05-27', payment: 'Transferencia' },
+  { id: '#VA-2055', customer: 'Florencia Méndez', items: 3, total: 462, status: 'enviado',    date: '2026-05-26', payment: 'Mercado Pago' },
+  { id: '#VA-2054', customer: 'Joaquín Torres',   items: 1, total: 220, status: 'entregado',  date: '2026-05-25', payment: 'Tarjeta' },
+  { id: '#VA-2053', customer: 'Mariana Soto',     items: 2, total: 158, status: 'entregado',  date: '2026-05-25', payment: 'Mercado Pago' },
+  { id: '#VA-2052', customer: 'Renato Vargas',    items: 1, total: 42,  status: 'cancelado',  date: '2026-05-24', payment: 'Tarjeta' },
+  { id: '#VA-2051', customer: 'Antonella Pérez',  items: 4, total: 386, status: 'entregado',  date: '2026-05-23', payment: 'Transferencia' },
+];
+const seedCustomers = [
+  { id: 'C-001', name: 'Camila Rivero',    email: 'camila.r@aura.mail',    city: 'Buenos Aires', orders: 6, spent: 1240, tier: 'oro'   },
+  { id: 'C-002', name: 'Luciano Almeida',  email: 'luciano@correo.com',    city: 'Rosario',      orders: 2, spent: 385,  tier: 'plata' },
+  { id: 'C-003', name: 'Florencia Méndez', email: 'flor.mendez@mail.com',  city: 'Córdoba',      orders: 9, spent: 2104, tier: 'oro'   },
+  { id: 'C-004', name: 'Joaquín Torres',   email: 'joaquin.t@aura.mail',   city: 'Mendoza',      orders: 3, spent: 612,  tier: 'plata' },
+  { id: 'C-005', name: 'Mariana Soto',     email: 'mariana@correo.com',    city: 'La Plata',     orders: 1, spent: 158,  tier: 'bronce'},
+  { id: 'C-006', name: 'Antonella Pérez',  email: 'anto.perez@mail.com',   city: 'Buenos Aires', orders: 5, spent: 1080, tier: 'oro'   },
+];
+const seedNotes = [
+  { id: 'N-01', family: 'Floral',    pillar: 'corazón', description: 'Rosa de Damasco, jazmín, tuberosa, iris pallida.' },
+  { id: 'N-02', family: 'Amaderado', pillar: 'fondo',   description: 'Cedro, sándalo, vetiver, palo de rosa.' },
+  { id: 'N-03', family: 'Oriental',  pillar: 'fondo',   description: 'Ámbar, oud, especias, resinas.' },
+  { id: 'N-04', family: 'Dulce',     pillar: 'fondo',   description: 'Vainilla, tonka, miel, caramelo.' },
+  { id: 'N-05', family: 'Cítrico',   pillar: 'salida',  description: 'Bergamota, limón, naranja amarga.' },
+  { id: 'N-06', family: 'Especiado', pillar: 'corazón', description: 'Pimienta rosa, cardamomo, azafrán.' },
+];
+const seedSubs = [
+  { id: 'S-01', email: 'sofia.l@correo.com', date: '2026-05-26', source: 'newsletter' },
+  { id: 'S-02', email: 'pablo.k@mail.com',   date: '2026-05-25', source: 'newsletter' },
+  { id: 'S-03', email: 'ana.m@aura.mail',    date: '2026-05-24', source: 'pop-up'    },
+  { id: 'S-04', email: 'martin@correo.com',  date: '2026-05-23', source: 'newsletter' },
+  { id: 'S-05', email: 'rocio.t@mail.com',   date: '2026-05-22', source: 'checkout'  },
+];
+
+// -------- ICONS (inline SVG) --------
+const Icon = {
+  home:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>,
+  bottle:  () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 2h6v3H9z"/><path d="M8 7h8l1 3v10a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V10z"/><path d="M10 13h4"/></svg>,
+  decant:  () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 3h4v4l3 5v8a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-8l3-5z"/><path d="M8 14h8"/></svg>,
+  bag:     () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 7h14l-1 13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2z"/><path d="M9 7a3 3 0 1 1 6 0"/></svg>,
+  user:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>,
+  leaf:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21c0-10 7-17 18-18-1 11-8 18-18 18z"/><path d="M3 21l8-8"/></svg>,
+  mail:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 7 9-7"/></svg>,
+  gear:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.1l2-1.5-2-3.4-2.3.9a7 7 0 0 0-1.9-1.1L14 3h-4l-.7 2.4a7 7 0 0 0-1.9 1.1l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.1l-2 1.5 2 3.4 2.3-.9c.6.4 1.2.8 1.9 1.1L10 21h4l.7-2.4c.7-.3 1.3-.6 1.9-1.1l2.3.9 2-3.4-2-1.5c.1-.4.1-.7.1-1.1z"/></svg>,
+  search:  () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>,
+  bell:    () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 21a2 2 0 0 0 4 0"/></svg>,
+  plus:    () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>,
+  menu:    () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>,
+  arrowUp: () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M7 14l5-5 5 5"/></svg>,
+  arrowDn: () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M7 10l5 5 5-5"/></svg>,
+  external:() => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 4h6v6"/><path d="M10 14l10-10"/><path d="M20 14v6H4V4h6"/></svg>,
+  download:() => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/></svg>,
+};
+
+// -------- HELPERS --------
+const money = (n) => '₲ ' + new Intl.NumberFormat('es-PY').format(Number(n) || 0);
+const newId = (prefix) => prefix + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+const statusTagClass = (s) => ({
+  active: 'ok', low: 'warn', out: 'bad',
+  pendiente: 'warn', preparando: 'info', enviado: 'info', entregado: 'ok', cancelado: 'bad',
+  oro: 'warn', plata: 'info', bronce: 'ok',
+})[s] || '';
+
+// -------- NAV --------
+const NAV = [
+  { group: 'General', items: [{ key: 'home', label: 'Inicio', icon: 'home' }] },
+  { group: 'Catálogo', items: [
+    { key: 'products', label: 'Perfumes', icon: 'bottle' },
+    { key: 'decants',  label: 'Decantes', icon: 'decant' },
+    { key: 'notes',    label: 'Notas olfativas', icon: 'leaf' },
+  ]},
+  { group: 'Ventas', items: [
+    { key: 'orders',    label: 'Pedidos',   icon: 'bag' },
+    { key: 'customers', label: 'Clientes',  icon: 'user' },
+  ]},
+  { group: 'Marca', items: [
+    { key: 'newsletter', label: 'Letter & Suscriptores', icon: 'mail' },
+  ]},
+  { group: 'Sistema', items: [
+    { key: 'users',    label: 'Usuarios admin', icon: 'user' },
+    { key: 'settings', label: 'Ajustes', icon: 'gear' },
+  ]},
+];
+
+// -------- HOOK persistente --------
+function useStored(key, seed) {
+  const [data, setData] = useState(() => LS.get(key, seed));
+  useEffect(() => { LS.set(key, data); }, [key, data]);
+  return [data, setData];
+}
+
+// -------- TOAST --------
+function useToast() {
+  const [msg, setMsg] = useState('');
+  useEffect(() => { if (!msg) return; const t = setTimeout(() => setMsg(''), 2200); return () => clearTimeout(t); }, [msg]);
+  return [msg, setMsg];
+}
+
+// -------- DASHBOARD --------
+function Dashboard({ products, decants, orders, customers, subs, go }) {
+  const ingresos = orders.filter(o => o.status !== 'cancelado').reduce((a, b) => a + b.total, 0);
+  const pendientes = orders.filter(o => o.status === 'pendiente' || o.status === 'preparando').length;
+  const stockBajo = [...products, ...decants].filter(p => p.status === 'low' || p.status === 'out').length;
+  const stats = [
+    { lbl: 'Ingresos del mes', num: money(ingresos), delta: '+12,4% vs mes anterior', up: true, ico: 'bag' },
+    { lbl: 'Pedidos activos', num: pendientes, delta: orders.length + ' totales este mes', up: true, ico: 'bag' },
+    { lbl: 'Productos en catálogo', num: products.length + decants.length, delta: stockBajo + ' con stock bajo', up: false, ico: 'bottle' },
+    { lbl: 'Suscriptores', num: subs.length, delta: '+3 esta semana', up: true, ico: 'mail' },
+  ];
+  const monthly = [
+    { m: 'Ene', v: 4200 }, { m: 'Feb', v: 5180 }, { m: 'Mar', v: 6320 }, { m: 'Abr', v: 7100 }, { m: 'May', v: 8240 }, { m: 'Jun', v: 7820 },
+  ];
+  const max = Math.max(...monthly.map(x => x.v));
+  return (
+    <div className="view">
+      <div className="view-head">
+        <div>
+          <h1>Bienvenida, <span className="it">Aura.</span></h1>
+          <p>Resumen del atelier — mediciones, rituales de venta y stock en tiempo real.</p>
+        </div>
+        <div style={{ display:'flex', gap: 10 }}>
+          <button className="btn btn-ghost"><Icon.download /> Exportar reporte</button>
+          <button className="btn btn-primary" onClick={() => go('products')}><Icon.plus /> Nuevo perfume</button>
+        </div>
+      </div>
+
+      <div className="stats">
+        {stats.map((s, i) => (
+          <div className="stat" key={i}>
+            <div className="top">
+              <span className="lbl">{s.lbl}</span>
+              <span className="ico">{Icon[s.ico]()}</span>
+            </div>
+            <div className="num">{s.num}</div>
+            <div className={`delta ${s.up ? 'up' : 'down'}`}>{s.up ? <Icon.arrowUp/> : <Icon.arrowDn/>} {s.delta}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid-2">
+        <div className="panel">
+          <div className="panel-head">
+            <div>
+              <span className="lbl">Ventas mensuales</span>
+              <h3>Curva del semestre</h3>
+            </div>
+            <div className="pill-row">
+              <button className="pill active">6 meses</button>
+              <button className="pill">12 meses</button>
+            </div>
+          </div>
+          <div className="chart">
+            {monthly.map((b, i) => (
+              <div key={i} className="bar" style={{ height: (b.v / max * 100) + '%' }}>
+                <span className="v">{money(b.v)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="chart-x">{monthly.map((b, i) => <span key={i}>{b.m}</span>)}</div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-head">
+            <div>
+              <span className="lbl">Stock crítico</span>
+              <h3>Atención requerida</h3>
+            </div>
+            <button className="btn btn-soft btn-mini" onClick={() => go('products')}>Ver todo</button>
+          </div>
+          {[...products, ...decants].filter(p => p.status !== 'active').slice(0, 6).map((p, i) => (
+            <div className="list-item" key={i}>
+              <div className="thumb">{(p.name || p.origin || '?')[0]}</div>
+              <div className="main">
+                <div className="name">{p.name || p.origin + ' · ' + p.ml + 'ml'}</div>
+                <div className="meta">{p.id} · {(p.family || 'Decante')}</div>
+              </div>
+              <div className="right">
+                <span className={`tag ${statusTagClass(p.status)}`}><span className="d"></span>{p.status === 'low' ? 'Stock bajo' : p.status === 'out' ? 'Agotado' : 'Activo'}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid-2">
+        <div className="panel">
+          <div className="panel-head">
+            <div>
+              <span className="lbl">Últimos pedidos</span>
+              <h3>Movimiento reciente</h3>
+            </div>
+            <button className="btn btn-soft btn-mini" onClick={() => go('orders')}>Ver todos</button>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Pedido</th><th>Cliente</th><th>Total</th><th>Estado</th></tr></thead>
+              <tbody>
+                {orders.slice(0, 5).map(o => (
+                  <tr key={o.id}>
+                    <td><strong>{o.id}</strong><div className="sub">{o.date}</div></td>
+                    <td>{o.customer}</td>
+                    <td>{money(o.total)}</td>
+                    <td><span className={`tag ${statusTagClass(o.status)}`}><span className="d"></span>{o.status}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-head">
+            <div>
+              <span className="lbl">Top clientes</span>
+              <h3>Aura fiel</h3>
+            </div>
+            <button className="btn btn-soft btn-mini" onClick={() => go('customers')}>Ver todos</button>
+          </div>
+          {[...customers].sort((a, b) => b.spent - a.spent).slice(0, 5).map(c => (
+            <div className="list-item" key={c.id}>
+              <div className="thumb">{c.name.split(' ').map(p => p[0]).slice(0, 2).join('')}</div>
+              <div className="main">
+                <div className="name">{c.name}</div>
+                <div className="meta">{c.city} · {c.orders} pedidos</div>
+              </div>
+              <div className="right">{money(c.spent)}<div className="meta" style={{ marginTop: 4 }}><span className={`tag ${statusTagClass(c.tier)}`}><span className="d"></span>{c.tier}</span></div></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------- PRODUCTS --------
+function Products({ products, setProducts, openToast }) {
+  const [filter, setFilter] = useState('todos');
+  const [q, setQ] = useState('');
+  const [editing, setEditing] = useState(null);
+
+  const filters = ['todos', 'destacados', 'mujer', 'hombre', 'unisex', 'low'];
+  const filtered = products.filter(p => {
+    if (filter === 'destacados' && !p.featured) return false;
+    if (!['todos','destacados','low'].includes(filter) && p.gender !== filter) return false;
+    if (filter === 'low' && p.status === 'active') return false;
+    if (q && !(p.name + p.brand + p.notes).toLowerCase().includes(q.toLowerCase())) return false;
+    return true;
+  });
+  const toggleFeatured = (id) => setProducts(products.map(x => x.id === id ? { ...x, featured: !x.featured } : x));
+
+  const save = (p) => {
+    if (p.id && products.find(x => x.id === p.id)) {
+      setProducts(products.map(x => x.id === p.id ? p : x));
+      openToast('Perfume actualizado · ' + p.name);
+    } else {
+      const np = { ...p, id: newId('P') };
+      setProducts([np, ...products]);
+      openToast('Perfume creado · ' + p.name);
+    }
+    setEditing(null);
+  };
+  const del = (id) => {
+    if (confirm('¿Eliminar este perfume del catálogo?')) {
+      setProducts(products.filter(p => p.id !== id));
+      openToast('Perfume eliminado');
+    }
+  };
+
+  return (
+    <div className="view">
+      <div className="view-head">
+        <div>
+          <h1>Catálogo de <span className="it">perfumes.</span></h1>
+          <p>Curaduría de la colección: alta perfumería, ediciones limitadas y novedades.</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => setEditing({ name:'', brand:'Vonn Aura', family:'', notes:'', image:'', size:'100ml', price:0, stock:0, status:'active', gender:'unisex', intensity:'eau de parfum', occasion:'noche', featured: false })}><Icon.plus/> Nuevo perfume</button>
+      </div>
+
+      <div className="panel">
+        <div className="panel-head">
+          <div className="pill-row">
+            {filters.map(f => <button key={f} className={`pill ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>{f === 'low' ? 'Stock bajo' : f === 'destacados' ? '★ Destacados' : f}</button>)}
+          </div>
+          <div className="search" style={{ width: 260 }}><Icon.search /><input placeholder="Buscar por nombre o nota…" value={q} onChange={e => setQ(e.target.value)} /></div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Perfume</th><th>Familia</th><th>Notas clave</th><th>Tamaño</th><th>Precio</th><th>Stock</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              {filtered.map(p => (
+                <tr key={p.id}>
+                  <td>{p.image ? <img src={p.image} alt={p.name} className="thumb" style={{ objectFit: 'contain', padding: 4 }} onError={(e) => { e.target.outerHTML = '<div class="thumb">' + p.name[0] + '</div>'; }} /> : <div className="thumb">{p.name[0]}</div>}</td>
+                  <td><div className="name">{p.name}</div><div className="sub">{p.brand} · {p.id}</div></td>
+                  <td>{p.family}</td>
+                  <td><div className="sub" style={{ marginTop: 0 }}>{p.notes}</div></td>
+                  <td>{p.size}</td>
+                  <td><strong>{money(p.price)}</strong></td>
+                  <td>{p.stock}</td>
+                  <td><span className={`tag ${statusTagClass(p.status)}`}><span className="d"></span>{p.status === 'active' ? 'Activo' : p.status === 'low' ? 'Stock bajo' : 'Agotado'}</span></td>
+                  <td><div className="row-actions"><button onClick={() => setEditing(p)}>Editar</button><button className="del" onClick={() => del(p.id)}>Borrar</button></div></td>
+                </tr>
+              ))}
+              {filtered.length === 0 && <tr><td colSpan="9"><div className="empty"><h4>Sin resultados</h4><p>Probá quitar filtros o ajustar la búsqueda.</p></div></td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {editing && <ProductModal product={editing} onClose={() => setEditing(null)} onSave={save} />}
+    </div>
+  );
+}
+
+function ProductModal({ product, onClose, onSave }) {
+  const [p, setP] = useState(product);
+  const set = (k, v) => setP({ ...p, [k]: v });
+  return (
+    <div className="modal-overlay">
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-head">
+          <div>
+            <span className="crumbs">{p.id ? 'Editar perfume' : 'Nuevo perfume'}</span>
+            <h2>{p.name || 'Sin nombre'}</h2>
+          </div>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+        <div className="form-grid">
+          <div className="field"><label>Nombre</label><input value={p.name} onChange={e => set('name', e.target.value)} /></div>
+          <div className="field"><label>Marca / Casa</label><input value={p.brand} onChange={e => set('brand', e.target.value)} /></div>
+          <div className="field full"><label>Familia olfativa</label><input value={p.family} onChange={e => set('family', e.target.value)} placeholder="Floral · Especiado" /></div>
+          <div className="field full"><label>Notas clave</label><textarea value={p.notes} onChange={e => set('notes', e.target.value)} placeholder="Azafrán, rosa de Damasco, iris…" /></div>
+          <div className="field full">
+            <label>Imágenes del perfume ({(p.images || (p.image ? [p.image] : [])).length})</label>
+            {(p.images || (p.image ? [p.image] : [''])).map((url, idx) => {
+              const imgs = p.images || (p.image ? [p.image] : ['']);
+              const update = (val) => {
+                const next = [...imgs]; next[idx] = val;
+                setP({ ...p, images: next, image: next[0] || '' });
+              };
+              const remove = () => {
+                const next = imgs.filter((_, i) => i !== idx);
+                setP({ ...p, images: next.length ? next : [''], image: next[0] || '' });
+              };
+              return (
+                <div key={idx} style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+                  <span style={{ fontSize: 10, letterSpacing: '.2em', color: 'var(--color-muted)', minWidth: 32, fontWeight: 600 }}>{idx === 0 ? 'PRINCIPAL' : '0' + (idx + 1)}</span>
+                  <input value={url} onChange={e => update(e.target.value)} placeholder="https://… o uploads/mi-perfume.png" style={{ flex: 1, background: 'var(--color-principal)', border: '1px solid var(--color-borde)', borderRadius: 'var(--radius-input)', padding: '12px 14px', color: 'var(--color-secundario)', fontSize: 14, outline: 0 }} />
+                  {url && <img src={url} alt="preview" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 8, background: 'var(--color-card)', border: '1px solid var(--color-borde)', padding: 3 }} onError={(e) => { e.target.style.opacity = '.3'; }} />}
+                  {imgs.length > 1 && <button type="button" onClick={remove} title="Eliminar" style={{ width: 32, height: 32, borderRadius: '50%', border: '1px solid var(--color-borde)', background: 'transparent', color: 'var(--bad)', cursor: 'pointer', fontSize: 16 }}>×</button>}
+                </div>
+              );
+            })}
+            <button type="button" onClick={() => { const imgs = p.images || (p.image ? [p.image] : []); setP({ ...p, images: [...imgs, ''], image: imgs[0] || '' }); }} className="btn btn-soft btn-mini" style={{ marginTop: 6 }}>+ Agregar otra imagen</button>
+          </div>
+          <div className="field"><label>Tamaño</label>
+            <select value={p.size} onChange={e => set('size', e.target.value)}>
+              <option>30ml</option><option>50ml</option><option>100ml</option><option>200ml</option>
+            </select>
+          </div>
+          <div className="field"><label>Concentración</label>
+            <select value={p.intensity} onChange={e => set('intensity', e.target.value)}>
+              <option value="cologne">Cologne</option>
+              <option value="eau de toilette">Eau de toilette</option>
+              <option value="eau de parfum">Eau de parfum</option>
+              <option value="elixir de parfum">Elixir de parfum</option>
+              <option value="extrait">Extrait de parfum</option>
+            </select>
+          </div>
+          <div className="field"><label>Género</label>
+            <select value={p.gender} onChange={e => set('gender', e.target.value)}>
+              <option value="mujer">Mujer</option><option value="hombre">Hombre</option><option value="unisex">Unisex</option>
+            </select>
+          </div>
+          <div className="field"><label>Ocasión</label>
+            <select value={p.occasion} onChange={e => set('occasion', e.target.value)}>
+              <option value="dia">Día</option><option value="noche">Noche</option><option value="oficina">Oficina</option><option value="evento">Evento</option>
+            </select>
+          </div>
+          <div className="field"><label>Precio ₲</label><input type="number" min="0" value={p.price} onChange={e => set('price', Number(e.target.value))} /></div>
+          <div className="field"><label>Stock</label><input type="number" min="0" value={p.stock} onChange={e => set('stock', Number(e.target.value))} /></div>
+          <div className="field"><label>Estado</label>
+            <select value={p.status} onChange={e => set('status', e.target.value)}>
+              <option value="active">Activo</option><option value="low">Stock bajo</option><option value="out">Agotado</option>
+            </select>
+          </div>
+          <div className="field full">
+            <label>Destacado</label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: p.featured ? 'var(--color-secundario)' : 'var(--color-soft)', color: p.featured ? 'var(--color-principal)' : 'var(--color-secundario)', borderRadius: 12, cursor: 'pointer', transition: 'all .3s', border: '1px solid ' + (p.featured ? 'var(--color-secundario)' : 'var(--color-borde)') }}>
+              <input type="checkbox" checked={!!p.featured} onChange={e => set('featured', e.target.checked)} style={{ width: 18, height: 18, accentColor: p.featured ? '#fff' : 'var(--color-secundario)' }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>★ Mostrar en Destacados</div>
+                <div style={{ fontSize: 11, opacity: .75, marginTop: 2 }}>Aparece arriba en la home del sitio público.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary" onClick={() => onSave(p)}>{p.id ? 'Guardar cambios' : 'Crear perfume'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------- DECANTS --------
+function Decants({ decants, setDecants, products, openToast }) {
+  const [editing, setEditing] = useState(null);
+  const save = (d) => {
+    if (d.id && decants.find(x => x.id === d.id)) {
+      setDecants(decants.map(x => x.id === d.id ? d : x));
+      openToast('Decante actualizado');
+    } else {
+      setDecants([{ ...d, id: newId('D') }, ...decants]);
+      openToast('Decante creado');
+    }
+    setEditing(null);
+  };
+  const del = (id) => { if (confirm('¿Eliminar decante?')) { setDecants(decants.filter(d => d.id !== id)); openToast('Decante eliminado'); } };
+  return (
+    <div className="view">
+      <div className="view-head">
+        <div>
+          <h1>Decantería <span className="it">curada.</span></h1>
+          <p>Ediciones fraccionadas — 3 ml, 5 ml y 10 ml de cada fragancia maestra.</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => setEditing({ origin: products[0]?.name || '', ml: 5, price: 0, stock: 0, status: 'active' })}><Icon.plus/> Nuevo decante</button>
+      </div>
+
+      <div className="grid-3">
+        {[3, 5, 10].map(ml => {
+          const list = decants.filter(d => d.ml === ml);
+          const totalStock = list.reduce((a, b) => a + b.stock, 0);
+          return (
+            <div className="stat" key={ml}>
+              <div className="top"><span className="lbl">Formato {ml} ml</span><span className="ico"><Icon.decant/></span></div>
+              <div className="num">{list.length}</div>
+              <div className="delta">{totalStock} unidades · {list.filter(d => d.status === 'out').length} agotados</div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="panel">
+        <div className="panel-head">
+          <div><span className="lbl">Listado</span><h3>Todos los decantes</h3></div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Perfume origen</th><th>Volumen</th><th>Precio</th><th>Stock</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              {decants.map(d => (
+                <tr key={d.id}>
+                  <td><strong>{d.id}</strong></td>
+                  <td><div className="name">{d.origin}</div></td>
+                  <td>{d.ml} ml</td>
+                  <td><strong>{money(d.price)}</strong></td>
+                  <td>{d.stock}</td>
+                  <td><span className={`tag ${statusTagClass(d.status)}`}><span className="d"></span>{d.status === 'active' ? 'Activo' : d.status === 'low' ? 'Bajo' : 'Agotado'}</span></td>
+                  <td><div className="row-actions"><button onClick={() => setEditing(d)}>Editar</button><button className="del" onClick={() => del(d.id)}>Borrar</button></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {editing && <DecantModal decant={editing} products={products} onClose={() => setEditing(null)} onSave={save} />}
+    </div>
+  );
+}
+
+function DecantModal({ decant, products, onClose, onSave }) {
+  const [d, setD] = useState(decant);
+  const set = (k, v) => setD({ ...d, [k]: v });
+  return (
+    <div className="modal-overlay">
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-head">
+          <div><span className="crumbs">{d.id ? 'Editar decante' : 'Nuevo decante'}</span><h2>{d.origin || '—'} · {d.ml} ml</h2></div>
+          <button className="close-btn" onClick={onClose}>×</button>
+        </div>
+        <div className="form-grid">
+          <div className="field full"><label>Perfume origen</label>
+            <select value={d.origin} onChange={e => set('origin', e.target.value)}>
+              {products.map(p => <option key={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div className="field"><label>Volumen</label>
+            <select value={d.ml} onChange={e => set('ml', Number(e.target.value))}>
+              <option value={3}>3 ml</option><option value={5}>5 ml</option><option value={10}>10 ml</option>
+            </select>
+          </div>
+          <div className="field"><label>Precio ₲</label><input type="number" min="0" value={d.price} onChange={e => set('price', Number(e.target.value))} /></div>
+          <div className="field"><label>Stock</label><input type="number" min="0" value={d.stock} onChange={e => set('stock', Number(e.target.value))} /></div>
+          <div className="field"><label>Estado</label>
+            <select value={d.status} onChange={e => set('status', e.target.value)}>
+              <option value="active">Activo</option><option value="low">Stock bajo</option><option value="out">Agotado</option>
+            </select>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary" onClick={() => onSave(d)}>{d.id ? 'Guardar' : 'Crear decante'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------- ORDERS --------
+function Orders({ orders, setOrders, openToast }) {
+  const [filter, setFilter] = useState('todos');
+  const filtered = filter === 'todos' ? orders : orders.filter(o => o.status === filter);
+  const setStatus = (id, status) => { setOrders(orders.map(o => o.id === id ? { ...o, status } : o)); openToast('Pedido actualizado · ' + id); };
+  const filters = ['todos', 'pendiente', 'preparando', 'enviado', 'entregado', 'cancelado'];
+  return (
+    <div className="view">
+      <div className="view-head">
+        <div>
+          <h1>Pedidos del <span className="it">atelier.</span></h1>
+          <p>Seguimiento del flujo: del ritual digital al envío real.</p>
+        </div>
+        <button className="btn btn-ghost"><Icon.download/> Exportar CSV</button>
+      </div>
+
+      <div className="grid-3">
+        {['pendiente','enviado','entregado'].map(s => (
+          <div className="stat" key={s}>
+            <div className="top"><span className="lbl">{s}</span><span className="ico"><Icon.bag/></span></div>
+            <div className="num">{orders.filter(o => o.status === s).length}</div>
+            <div className="delta">{money(orders.filter(o => o.status === s).reduce((a,b)=>a+b.total,0))} · acumulado</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="panel">
+        <div className="panel-head">
+          <div className="pill-row">
+            {filters.map(f => <button key={f} className={`pill ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>{f}</button>)}
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th>Pedido</th><th>Cliente</th><th>Items</th><th>Total</th><th>Pago</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              {filtered.map(o => (
+                <tr key={o.id}>
+                  <td><strong>{o.id}</strong></td>
+                  <td>{o.customer}</td>
+                  <td>{o.items}</td>
+                  <td><strong>{money(o.total)}</strong></td>
+                  <td>{o.payment}</td>
+                  <td>{o.date}</td>
+                  <td><span className={`tag ${statusTagClass(o.status)}`}><span className="d"></span>{o.status}</span></td>
+                  <td>
+                    <select value={o.status} onChange={e => setStatus(o.id, e.target.value)} style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid var(--color-borde)', background: 'var(--color-principal)', color: 'var(--color-secundario)', fontSize: 11 }}>
+                      {filters.slice(1).map(s => <option key={s}>{s}</option>)}
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------- CUSTOMERS --------
+function Customers({ customers, setCustomers, openToast }) {
+  const [q, setQ] = useState('');
+  const filtered = customers.filter(c => (c.name + c.email + c.city).toLowerCase().includes(q.toLowerCase()));
+  const del = (id) => { if (confirm('¿Eliminar cliente?')) { setCustomers(customers.filter(c => c.id !== id)); openToast('Cliente eliminado'); } };
+  return (
+    <div className="view">
+      <div className="view-head">
+        <div>
+          <h1>Clientes <span className="it">de la maison.</span></h1>
+          <p>Quiénes eligen Vonn Aura — ciudades, frecuencia, gasto y tier de fidelidad.</p>
+        </div>
+        <div className="search" style={{ position:'relative', marginLeft: 0 }}><Icon.search/><input placeholder="Buscar cliente…" value={q} onChange={e => setQ(e.target.value)} /></div>
+      </div>
+
+      <div className="panel">
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Cliente</th><th>Email</th><th>Ciudad</th><th>Pedidos</th><th>Total gastado</th><th>Tier</th><th></th></tr></thead>
+            <tbody>
+              {filtered.map(c => (
+                <tr key={c.id}>
+                  <td><div className="thumb">{c.name.split(' ').map(p => p[0]).slice(0,2).join('')}</div></td>
+                  <td><div className="name">{c.name}</div><div className="sub">{c.id}</div></td>
+                  <td>{c.email}</td>
+                  <td>{c.city}</td>
+                  <td>{c.orders}</td>
+                  <td><strong>{money(c.spent)}</strong></td>
+                  <td><span className={`tag ${statusTagClass(c.tier)}`}><span className="d"></span>{c.tier}</span></td>
+                  <td><div className="row-actions"><button>Ficha</button><button className="del" onClick={() => del(c.id)}>Borrar</button></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------- NOTES --------
+function Notes({ notes, setNotes, openToast }) {
+  const [editing, setEditing] = useState(null);
+  const save = (n) => {
+    if (n.id && notes.find(x => x.id === n.id)) setNotes(notes.map(x => x.id === n.id ? n : x));
+    else setNotes([{ ...n, id: newId('N') }, ...notes]);
+    openToast('Nota guardada');
+    setEditing(null);
+  };
+  const del = (id) => { if (confirm('¿Eliminar nota?')) { setNotes(notes.filter(n => n.id !== id)); } };
+  return (
+    <div className="view">
+      <div className="view-head">
+        <div>
+          <h1>Notas <span className="it">olfativas.</span></h1>
+          <p>El vocabulario sensorial de la casa — familias, pilares y descripciones.</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => setEditing({ family: '', pillar: 'corazón', description: '' })}><Icon.plus/> Nueva nota</button>
+      </div>
+      <div className="grid-3">
+        {notes.map(n => (
+          <div className="panel" key={n.id}>
+            <div className="panel-head">
+              <span className="tag info"><span className="d"></span>{n.pillar}</span>
+              <div className="row-actions"><button onClick={() => setEditing(n)}>Editar</button><button className="del" onClick={() => del(n.id)}>Borrar</button></div>
+            </div>
+            <h3 style={{ fontSize: 32, marginBottom: 8 }}>{n.family}</h3>
+            <p style={{ color: 'var(--color-muted)', lineHeight: 1.6, fontSize: 13 }}>{n.description}</p>
+          </div>
+        ))}
+      </div>
+      {editing && (
+        <div className="modal-overlay">
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-head"><div><span className="crumbs">{editing.id ? 'Editar' : 'Nueva'}</span><h2>Nota olfativa</h2></div><button className="close-btn" onClick={() => setEditing(null)}>×</button></div>
+            <div className="form-grid">
+              <div className="field"><label>Familia</label><input value={editing.family} onChange={e => setEditing({ ...editing, family: e.target.value })} /></div>
+              <div className="field"><label>Pilar</label><select value={editing.pillar} onChange={e => setEditing({ ...editing, pillar: e.target.value })}><option>salida</option><option>corazón</option><option>fondo</option></select></div>
+              <div className="field full"><label>Descripción</label><textarea value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} /></div>
+            </div>
+            <div className="modal-foot"><button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancelar</button><button className="btn btn-primary" onClick={() => save(editing)}>Guardar</button></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// -------- NEWSLETTER --------
+function Newsletter({ subs, setSubs, openToast }) {
+  const [q, setQ] = useState('');
+  const filtered = subs.filter(s => s.email.toLowerCase().includes(q.toLowerCase()));
+  const del = (id) => { setSubs(subs.filter(s => s.id !== id)); openToast('Suscriptor eliminado'); };
+  const exportCSV = () => {
+    const csv = 'email,fecha,origen\n' + subs.map(s => `${s.email},${s.date},${s.source}`).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'vonn-aura-suscriptores.csv';
+    a.click();
+    openToast('CSV descargado');
+  };
+  return (
+    <div className="view">
+      <div className="view-head">
+        <div>
+          <h1>La <span className="it">letter.</span></h1>
+          <p>Suscriptores del newsletter editorial. Notas, rituales y pre-acceso a ediciones limitadas.</p>
+        </div>
+        <div style={{ display:'flex', gap: 10 }}>
+          <button className="btn btn-ghost" onClick={exportCSV}><Icon.download/> Exportar CSV</button>
+          <button className="btn btn-primary"><Icon.mail/> Redactar envío</button>
+        </div>
+      </div>
+
+      <div className="grid-3">
+        <div className="stat"><div className="top"><span className="lbl">Total</span><span className="ico"><Icon.mail/></span></div><div className="num">{subs.length}</div><div className="delta up"><Icon.arrowUp/> +{subs.filter(s => s.date >= '2026-05-23').length} esta semana</div></div>
+        <div className="stat"><div className="top"><span className="lbl">Vía newsletter</span><span className="ico"><Icon.mail/></span></div><div className="num">{subs.filter(s => s.source === 'newsletter').length}</div><div className="delta">Origen orgánico</div></div>
+        <div className="stat"><div className="top"><span className="lbl">Tasa apertura est.</span><span className="ico"><Icon.mail/></span></div><div className="num">42%</div><div className="delta up"><Icon.arrowUp/> Media del sector</div></div>
+      </div>
+
+      <div className="panel">
+        <div className="panel-head">
+          <div><span className="lbl">Listado</span><h3>Todos los suscriptores</h3></div>
+          <div className="search" style={{ width: 260 }}><Icon.search/><input placeholder="Buscar email…" value={q} onChange={e => setQ(e.target.value)} /></div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th>Email</th><th>Origen</th><th>Fecha</th><th></th></tr></thead>
+            <tbody>
+              {filtered.map(s => (
+                <tr key={s.id}>
+                  <td><div className="name" style={{ fontSize: 14 }}>{s.email}</div></td>
+                  <td><span className="tag"><span className="d"></span>{s.source}</span></td>
+                  <td>{s.date}</td>
+                  <td><div className="row-actions"><button className="del" onClick={() => del(s.id)}>Borrar</button></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------- SETTINGS --------
+function Settings({ settings, setSettings, openToast }) {
+  const [s, setS] = useState(settings);
+  const save = () => { setSettings(s); openToast('Ajustes guardados'); };
+  const set = (k, v) => setS({ ...s, [k]: v });
+  return (
+    <div className="view">
+      <div className="view-head">
+        <div>
+          <h1>Ajustes del <span className="it">atelier.</span></h1>
+          <p>Identidad de marca, monedas, envíos y notificaciones del panel.</p>
+        </div>
+        <button className="btn btn-primary" onClick={save}>Guardar cambios</button>
+      </div>
+
+      <div className="grid-2">
+        <div className="panel">
+          <div className="panel-head"><div><span className="lbl">Identidad</span><h3>Marca</h3></div></div>
+          <div className="form-grid">
+            <div className="field full"><label>Nombre comercial</label><input value={s.brand} onChange={e => set('brand', e.target.value)} /></div>
+            <div className="field full"><label>Lema editorial</label><input value={s.tagline} onChange={e => set('tagline', e.target.value)} /></div>
+            <div className="field"><label>Color principal</label><input value={s.colorPrimary} onChange={e => set('colorPrimary', e.target.value)} /></div>
+            <div className="field"><label>Color secundario</label><input value={s.colorSecondary} onChange={e => set('colorSecondary', e.target.value)} /></div>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-head"><div><span className="lbl">Operaciones</span><h3>Tienda</h3></div></div>
+          <div className="form-grid">
+            <div className="field"><label>Moneda</label><select value={s.currency} onChange={e => set('currency', e.target.value)}><option>PYG</option><option>USD</option><option>ARS</option><option>EUR</option></select></div>
+            <div className="field"><label>Idioma</label><select value={s.locale} onChange={e => set('locale', e.target.value)}><option>es</option><option>en</option><option>fr</option></select></div>
+            <div className="field full"><label>Email de contacto</label><input value={s.email} onChange={e => set('email', e.target.value)} /></div>
+            <div className="field"><label>Costo envío base ₲</label><input type="number" value={s.shipping} onChange={e => set('shipping', Number(e.target.value))} /></div>
+            <div className="field"><label>Envío gratis desde ₲</label><input type="number" value={s.freeShipping} onChange={e => set('freeShipping', Number(e.target.value))} /></div>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-head"><div><span className="lbl">Comunicaciones</span><h3>Notificaciones</h3></div></div>
+          {['Nuevos pedidos', 'Stock bajo', 'Suscriptores nuevos', 'Reseñas pendientes'].map((label, i) => {
+            const key = 'notif_' + i;
+            return (
+              <div className="list-item" key={i}>
+                <div className="main"><div className="name" style={{ fontSize: 14 }}>{label}</div><div className="meta">Aviso en panel y por email</div></div>
+                <label style={{ display:'inline-flex', alignItems:'center', gap: 10 }}>
+                  <input type="checkbox" checked={!!s[key]} onChange={e => set(key, e.target.checked)} />
+                </label>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="panel">
+          <div className="panel-head"><div><span className="lbl">Datos del sistema</span><h3>Mantenimiento</h3></div></div>
+          <p style={{ color:'var(--color-muted)', lineHeight: 1.6, fontSize: 13, marginBottom: 16 }}>El panel guarda todo en el navegador (localStorage). Podés exportar o restaurar el set semilla.</p>
+          <div style={{ display:'flex', gap: 10, flexWrap:'wrap' }}>
+            <button className="btn btn-soft" onClick={() => { const data = { products: LS.get('vonn_products'), decants: LS.get('vonn_decants'), orders: LS.get('vonn_orders'), customers: LS.get('vonn_customers'), notes: LS.get('vonn_notes'), subs: LS.get('vonn_subs'), settings: LS.get('vonn_settings') }; const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'vonn-aura-backup.json'; a.click(); openToast('Backup descargado'); }}><Icon.download/> Exportar backup</button>
+            <button className="btn btn-danger" onClick={() => { if (confirm('¿Restaurar datos semilla? Esto elimina cambios locales.')) { ['vonn_products','vonn_decants','vonn_orders','vonn_customers','vonn_notes','vonn_subs','vonn_settings'].forEach(k => localStorage.removeItem(k)); location.reload(); } }}>Restaurar semilla</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// -------- AUTH --------
+const seedUsers = [
+  { id: 'U-001', name: 'Aura Maison', email: 'admin@vonnaura.com', password: 'aura2026', role: 'Curadora', initials: 'A' },
+];
+
+function Login({ users, onLogin }) {
+  const [email, setEmail] = useState('');
+  const [pass, setPass] = useState('');
+  const [err, setErr] = useState('');
+  const submit = (e) => {
+    e.preventDefault();
+    const u = users.find(x => x.email.toLowerCase() === email.toLowerCase() && x.password === pass);
+    if (!u) { setErr('Credenciales inválidas. Verificá email y contraseña.'); return; }
+    onLogin(u);
+  };
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'radial-gradient(circle at 30% 20%, rgba(112,38,51,.08), transparent 60%), var(--color-principal)' }}>
+      <div className="panel lg" style={{ maxWidth: 460, width: '100%', padding: 44 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div className="brand" style={{ fontSize: 30, padding: 0, marginBottom: 4 }}>Vonn <span className="it">aura</span></div>
+          <small style={{ fontSize: 9, letterSpacing: '.35em', color: 'var(--color-muted)', textTransform: 'uppercase' }}>· Atelier · acceso ·</small>
+        </div>
+        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div className="field"><label>Email</label><input type="email" required value={email} onChange={e => { setEmail(e.target.value); setErr(''); }} placeholder="admin@vonnaura.com" /></div>
+          <div className="field"><label>Contraseña</label><input type="password" required value={pass} onChange={e => { setPass(e.target.value); setErr(''); }} placeholder="••••••••" /></div>
+          {err && <div style={{ fontSize: 12, color: 'var(--bad)', padding: '8px 12px', background: 'rgba(163,48,58,.08)', borderRadius: 10, border: '1px solid rgba(163,48,58,.2)' }}>{err}</div>}
+          <button type="submit" className="btn btn-primary" style={{ marginTop: 8, justifyContent: 'center' }}>Entrar al atelier</button>
+        </form>
+        <div style={{ marginTop: 24, padding: 14, background: 'var(--color-soft)', borderRadius: 12, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.6 }}>
+          <strong style={{ color: 'var(--color-secundario)' }}>Acceso demo:</strong><br/>
+          admin@vonnaura.com · aura2026
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Users({ users, setUsers, current, openToast }) {
+  const [editing, setEditing] = useState(null);
+  const save = (u) => {
+    if (!u.name || !u.email || !u.password) { openToast('Completá todos los campos'); return; }
+    if (u.id && users.find(x => x.id === u.id)) {
+      setUsers(users.map(x => x.id === u.id ? u : x));
+      openToast('Usuario actualizado');
+    } else {
+      const nu = { ...u, id: newId('U'), initials: u.name.split(' ').map(p => p[0]).slice(0,2).join('').toUpperCase() };
+      setUsers([nu, ...users]);
+      openToast('Usuario creado · ' + u.email);
+    }
+    setEditing(null);
+  };
+  const del = (id) => {
+    if (id === current.id) { openToast('No podés borrar el usuario activo'); return; }
+    if (users.length <= 1) { openToast('Debe quedar al menos un admin'); return; }
+    if (confirm('¿Eliminar este usuario admin?')) {
+      setUsers(users.filter(u => u.id !== id));
+      openToast('Usuario eliminado');
+    }
+  };
+  return (
+    <div className="view">
+      <div className="view-head">
+        <div>
+          <h1>Usuarios <span className="it">admin.</span></h1>
+          <p>Quién tiene acceso al atelier. Cada cuenta puede gestionar el catálogo y los pedidos.</p>
+        </div>
+        <button className="btn btn-primary" onClick={() => setEditing({ name: '', email: '', password: '', role: 'Curadora' })}><Icon.plus/> Nuevo admin</button>
+      </div>
+
+      <div className="panel">
+        <div className="panel-head">
+          <div><span className="lbl">Cuentas activas</span><h3>{users.length} {users.length === 1 ? 'administrador' : 'administradores'}</h3></div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th></th><th>Nombre</th><th>Email</th><th>Rol</th><th>Contraseña</th><th></th></tr></thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id}>
+                  <td><div className="thumb">{u.initials || u.name[0]}</div></td>
+                  <td><div className="name">{u.name}{u.id === current.id && <span className="tag ok" style={{ marginLeft: 10 }}><span className="d"></span>vos</span>}</div><div className="sub">{u.id}</div></td>
+                  <td>{u.email}</td>
+                  <td>{u.role}</td>
+                  <td><span style={{ fontFamily: 'monospace', color: 'var(--color-muted)' }}>{'•'.repeat(Math.min(u.password.length, 10))}</span></td>
+                  <td><div className="row-actions"><button onClick={() => setEditing(u)}>Editar</button><button className="del" onClick={() => del(u.id)}>Borrar</button></div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="panel">
+        <div className="panel-head"><div><span className="lbl">Seguridad</span><h3>Sobre las credenciales</h3></div></div>
+        <p style={{ color: 'var(--color-muted)', lineHeight: 1.6, fontSize: 13 }}>
+          Las credenciales se guardan en <code>localStorage</code> del navegador para esta demo. Si conectás un backend real, deberían moverse a la base de datos con hash (bcrypt/argon2) y autenticación por token. El panel ya tiene la pantalla de login y sesión persistente listas para enchufar a una API.
+        </p>
+      </div>
+
+      {editing && (
+        <div className="modal-overlay">
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-head"><div><span className="crumbs">{editing.id ? 'Editar' : 'Nuevo'}</span><h2>Usuario admin</h2></div><button className="close-btn" onClick={() => setEditing(null)}>×</button></div>
+            <div className="form-grid">
+              <div className="field"><label>Nombre</label><input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} placeholder="Aura Maison" /></div>
+              <div className="field"><label>Rol</label>
+                <select value={editing.role} onChange={e => setEditing({ ...editing, role: e.target.value })}>
+                  <option>Curadora</option><option>Gerente</option><option>Atelier</option><option>Soporte</option>
+                </select>
+              </div>
+              <div className="field full"><label>Email de acceso</label><input type="email" value={editing.email} onChange={e => setEditing({ ...editing, email: e.target.value })} placeholder="nombre@vonnaura.com" /></div>
+              <div className="field full"><label>Contraseña</label><input type="text" value={editing.password} onChange={e => setEditing({ ...editing, password: e.target.value })} placeholder="Mínimo 6 caracteres" /></div>
+            </div>
+            <div className="modal-foot"><button className="btn btn-ghost" onClick={() => setEditing(null)}>Cancelar</button><button className="btn btn-primary" onClick={() => save(editing)}>{editing.id ? 'Guardar' : 'Crear usuario'}</button></div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NotificationsBell({ products, decants, orders, subs, go }) {
+  const [open, setOpen] = useState(false);
+  const [readIds, setReadIds] = useStored('vonn_notif_read', []);
+  const ref = useRef(null);
+
+  const items = useMemo(() => {
+    const list = [];
+    orders.filter(o => o.status === 'pendiente').forEach(o => {
+      list.push({ id: 'ord-' + o.id, type: 'order', tag: 'Pedido', tagCls: 'warn', title: 'Nuevo pedido ' + o.id, sub: o.customer + ' · ' + money(o.total), action: () => go('orders'), date: o.date });
+    });
+    [...products, ...decants].filter(p => p.status === 'low' || p.status === 'out').forEach(p => {
+      const name = p.name || (p.origin + ' · ' + p.ml + 'ml');
+      list.push({ id: 'stk-' + p.id, type: 'stock', tag: p.status === 'out' ? 'Agotado' : 'Stock bajo', tagCls: p.status === 'out' ? 'bad' : 'warn', title: name, sub: p.id + ' · ' + (p.status === 'out' ? 'Reponer urgente' : (p.stock + ' unidades restantes')), action: () => go(p.ml ? 'decants' : 'products'), date: '' });
+    });
+    subs.slice(0, 3).forEach(s => {
+      list.push({ id: 'sub-' + s.id, type: 'sub', tag: 'Suscriptor', tagCls: 'info', title: s.email, sub: 'Origen: ' + s.source, action: () => go('newsletter'), date: s.date });
+    });
+    return list;
+  }, [products, decants, orders, subs]);
+
+  const unread = items.filter(i => !readIds.includes(i.id)).length;
+
+  useEffect(() => {
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  const markAll = () => setReadIds(items.map(i => i.id));
+  const pick = (it) => { if (!readIds.includes(it.id)) setReadIds([...readIds, it.id]); it.action(); setOpen(false); };
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button className="icon-btn" onClick={() => setOpen(o => !o)} aria-label="Notificaciones">
+        <Icon.bell/>
+        {unread > 0 && <span className="dot"></span>}
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', width: 360, maxWidth: '90vw', background: 'var(--color-card)', border: '1px solid var(--color-borde)', borderRadius: 18, boxShadow: 'var(--shadow-soft)', zIndex: 40, maxHeight: 460, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--color-borde)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 600 }}>Notificaciones</div>
+              <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 2 }}>{unread} sin leer · {items.length} totales</div>
+            </div>
+            {unread > 0 && <button onClick={markAll} style={{ background: 'transparent', border: 0, color: 'var(--color-secundario)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', cursor: 'pointer', fontWeight: 500 }}>Marcar leídas</button>}
+          </div>
+          <div style={{ overflowY: 'auto', flex: 1 }}>
+            {items.length === 0 && (
+              <div className="empty"><h4>Todo en orden</h4><p>Sin pedidos pendientes ni stock crítico.</p></div>
+            )}
+            {items.map(it => {
+              const isRead = readIds.includes(it.id);
+              return (
+                <button key={it.id} onClick={() => pick(it)} style={{ width: '100%', textAlign: 'left', padding: '12px 18px', background: isRead ? 'transparent' : 'rgba(112,38,51,.04)', border: 0, borderBottom: '1px solid var(--color-borde)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 6, transition: 'background .2s' }} onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-soft)'} onMouseLeave={(e) => e.currentTarget.style.background = isRead ? 'transparent' : 'rgba(112,38,51,.04)'}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <span className={`tag ${it.tagCls}`}><span className="d"></span>{it.tag}</span>
+                    {!isRead && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-secundario)', flexShrink: 0 }}></span>}
+                  </div>
+                  <div style={{ fontFamily: 'var(--font-title)', fontSize: 15, fontWeight: 500, color: 'var(--color-secundario)' }}>{it.title}</div>
+                  <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>{it.sub}{it.date && ' · ' + it.date}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function UserChip({ user, onLogout, onProfile }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button className="user-chip" onClick={() => setOpen(o => !o)} style={{ border: '1px solid var(--color-borde)', cursor: 'pointer' }}>
+        <span className="av">{user.initials || user.name[0]}</span>
+        <div style={{ textAlign: 'left' }}><div className="name">{user.name}</div><div className="role">{user.role}</div></div>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 8px)', minWidth: 220, background: 'var(--color-card)', border: '1px solid var(--color-borde)', borderRadius: 16, padding: 8, boxShadow: 'var(--shadow-soft)', zIndex: 30 }}>
+          <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--color-borde)', marginBottom: 6 }}>
+            <div style={{ fontSize: 13, fontWeight: 600 }}>{user.name}</div>
+            <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 2 }}>{user.email}</div>
+          </div>
+          <button onClick={() => { onProfile(); setOpen(false); }} style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', border: 0, color: 'var(--color-secundario)', fontSize: 13, borderRadius: 10, cursor: 'pointer' }}>Gestionar usuarios</button>
+          <button onClick={() => { onLogout(); setOpen(false); }} style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', border: 0, color: 'var(--bad)', fontSize: 13, borderRadius: 10, cursor: 'pointer' }}>Cerrar sesión</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// -------- ROOT --------
+function App() {
+  const [users, setUsers] = useStored('vonn_users', seedUsers);
+  const [session, setSession] = useStored('vonn_session', null);
+  const [view, setView] = useState('home');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [toast, setToast] = useToast();
+  const [products, setProducts]   = useStored('vonn_products',  seedProducts);
+  const [decants, setDecants]     = useStored('vonn_decants',   seedDecants);
+  const [orders, setOrders]       = useStored('vonn_orders',    seedOrders);
+  const [customers, setCustomers] = useStored('vonn_customers', seedCustomers);
+  const [notes, setNotes]         = useStored('vonn_notes',     seedNotes);
+  const [subs, setSubs]           = useStored('vonn_subs',      seedSubs);
+  const [settings, setSettings]   = useStored('vonn_settings', {
+    brand: 'Vonn Aura', tagline: 'El aroma del devenir',
+    colorPrimary: '#F8ECE7', colorSecondary: '#702633',
+    currency: 'PYG', locale: 'es', email: 'atelier@vonnaura.com',
+    shipping: 35000, freeShipping: 800000,
+    notif_0: true, notif_1: true, notif_2: false, notif_3: true,
+  });
+
+  const current = session ? users.find(u => u.id === session.userId) : null;
+  if (!current) return <Login users={users} onLogin={(u) => setSession({ userId: u.id, since: Date.now() })} />;
+
+  const counts = {
+    products: products.length,
+    decants: decants.length,
+    orders: orders.filter(o => o.status === 'pendiente' || o.status === 'preparando').length,
+    customers: customers.length,
+    notes: notes.length,
+    newsletter: subs.length,
+  };
+
+  const go = (k) => { setView(k); setSidebarOpen(false); };
+
+  const currentLabel = NAV.flatMap(g => g.items).find(i => i.key === view)?.label || 'Panel';
+
+  return (
+    <div className="app">
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="brand">Vonn <span className="it">aura</span><small>· Atelier · panel</small></div>
+        {NAV.map(group => (
+          <div className="nav-section" key={group.group}>
+            <h6>{group.group}</h6>
+            {group.items.map(it => {
+              const Ico = Icon[it.icon];
+              return (
+                <a key={it.key} className={`nav-item ${view === it.key ? 'active' : ''}`} onClick={() => go(it.key)}>
+                  <span className="ico"><Ico/></span>
+                  <span>{it.label}</span>
+                  {counts[it.key] !== undefined && <span className="count">{counts[it.key]}</span>}
+                </a>
+              );
+            })}
+          </div>
+        ))}
+        <div className="sidebar-foot">
+          <div>v 1.0 · build editorial</div>
+          <a href="VONN AURA.html" style={{ display: 'inline-flex', gap: 6, alignItems: 'center', marginTop: 8, color: 'var(--color-secundario)' }}><Icon.external/> Ver tienda pública</a>
+        </div>
+      </aside>
+
+      <main className="main">
+        <div className="topbar">
+          <button className="icon-btn menu-btn" onClick={() => setSidebarOpen(o => !o)}><Icon.menu/></button>
+          <div className="crumbs">Atelier · <strong>{currentLabel}</strong></div>
+          <div className="search"><Icon.search/><input placeholder="Buscar perfumes, pedidos, clientes…" /></div>
+          <NotificationsBell products={products} decants={decants} orders={orders} subs={subs} go={go} />
+          <UserChip user={current} onLogout={() => { if (confirm('¿Cerrar sesión?')) setSession(null); }} onProfile={() => go('users')} />
+        </div>
+
+        {view === 'home'       && <Dashboard products={products} decants={decants} orders={orders} customers={customers} subs={subs} go={go} />}
+        {view === 'products'   && <Products products={products} setProducts={setProducts} openToast={setToast} />}
+        {view === 'decants'    && <Decants decants={decants} setDecants={setDecants} products={products} openToast={setToast} />}
+        {view === 'orders'     && <Orders orders={orders} setOrders={setOrders} openToast={setToast} />}
+        {view === 'customers'  && <Customers customers={customers} setCustomers={setCustomers} openToast={setToast} />}
+        {view === 'notes'      && <Notes notes={notes} setNotes={setNotes} openToast={setToast} />}
+        {view === 'newsletter' && <Newsletter subs={subs} setSubs={setSubs} openToast={setToast} />}
+        {view === 'users'      && <Users users={users} setUsers={setUsers} current={current} openToast={setToast} />}
+        {view === 'settings'   && <Settings settings={settings} setSettings={setSettings} openToast={setToast} />}
+      </main>
+
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('app')).render(<App/>);
+</script>
+</body>
+</html>
