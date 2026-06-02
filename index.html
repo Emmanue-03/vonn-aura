@@ -221,10 +221,17 @@
   .card-info { display: flex; flex-direction: column; gap: 8px; min-height: 64px; }
   .card-info h3 { font-family: var(--font-title); font-weight: 500; font-size: 20px; letter-spacing: .01em; line-height: 1.15; color: var(--color-secundario); }
   .card-info .family { font-family: var(--font-ui); font-size: 10.5px; color: var(--color-muted); letter-spacing: .12em; margin-top: 2px; text-transform: uppercase; }
-  .card-foot { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid var(--color-borde); gap: 10px; }
+  .card-foot { display: flex; flex-direction: column; gap: 12px; padding-top: 14px; border-top: 1px solid var(--color-borde); }
+  .card-foot .card-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .card-price { font-family: var(--font-title); font-size: 17px; color: var(--color-secundario); }
-  .card-cta { font-family: var(--font-ui); font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--color-secundario); display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--color-secundario); border-radius: var(--radius-pill); transition: all .4s; }
+  .card-qty { display: inline-flex; align-items: center; border: 1px solid var(--color-borde); border-radius: 999px; overflow: hidden; }
+  .card-qty button { background: transparent; border: 0; color: var(--color-secundario); width: 26px; height: 28px; font-size: 14px; cursor: pointer; padding: 0; line-height: 1; }
+  .card-qty button:hover { background: rgba(112,38,51,.08); }
+  .card-qty span { min-width: 22px; text-align: center; font-size: 12px; color: var(--color-secundario); font-family: var(--font-ui); }
+  .card-cta { font-family: var(--font-ui); font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase; color: var(--color-secundario); display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--color-secundario); border-radius: var(--radius-pill); background: transparent; cursor: pointer; transition: all .4s; }
   .card-cta:hover { background: var(--color-secundario); color: var(--color-principal); }
+  .card-cta:disabled { opacity: .45; cursor: not-allowed; }
+  .card-cta:disabled:hover { background: transparent; color: var(--color-secundario); }
 
   /* RITUAL — bloque editorial oscuro */
   .ritual-section { background: var(--color-secundario); color: var(--color-principal); margin: 60px 0; }
@@ -721,10 +728,19 @@ function useProducts() {
 }
 
 function Card({ p }) {
+  const [qty, setQty] = useState(1);
   const openDetail = (e) => {
     e.preventDefault();
     window.dispatchEvent(new CustomEvent('vonn:open-product', { detail: p }));
   };
+  const addToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (p.status === 'out') return;
+    window.dispatchEvent(new CustomEvent('vonn:cart-add', { detail: { product: p, qty } }));
+    setQty(1);
+  };
+  const isOut = p.status === 'out';
   return (
     <article className="card fade-in">
       <div className="card-head">
@@ -741,7 +757,16 @@ function Card({ p }) {
       </div>
       <div className="card-foot">
         <div className="card-price">{p.price}</div>
-        <a href="#" className="card-cta" onClick={openDetail}>Descubrir <span>→</span></a>
+        <div className="card-row">
+          <div className="card-qty">
+            <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} aria-label="Menos">−</button>
+            <span>{qty}</span>
+            <button type="button" onClick={() => setQty(q => q + 1)} aria-label="Más">+</button>
+          </div>
+          <button type="button" className="card-cta" onClick={addToCart} disabled={isOut}>
+            {isOut ? 'Sin stock' : 'Agregar'} <span>→</span>
+          </button>
+        </div>
       </div>
     </article>
   );
