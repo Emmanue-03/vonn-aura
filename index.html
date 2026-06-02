@@ -96,16 +96,17 @@
   .hero::before {
     content: '';
     position: absolute;
-    inset: -60px -40px;
+    inset: -80px -60px;
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(ellipse 75% 55% at 50% -5%, rgba(255, 248, 245, 0.88), transparent 58%),
-      radial-gradient(ellipse 50% 45% at 16% 52%, rgba(112, 38, 51, 0.22), transparent 65%),
-      radial-gradient(ellipse 50% 45% at 84% 58%, rgba(112, 38, 51, 0.20), transparent 65%),
-      radial-gradient(ellipse 110% 75% at 50% 112%, rgba(112, 38, 51, 0.16), transparent 60%);
+      radial-gradient(ellipse 65% 50% at 50% -2%, rgba(255, 245, 238, 0.98), transparent 55%),
+      radial-gradient(ellipse 55% 50% at 14% 52%, rgba(112, 38, 51, 0.48), transparent 62%),
+      radial-gradient(ellipse 55% 50% at 86% 58%, rgba(112, 38, 51, 0.44), transparent 62%),
+      radial-gradient(ellipse 120% 80% at 50% 115%, rgba(70, 22, 32, 0.42), transparent 58%),
+      radial-gradient(ellipse 90% 60% at 50% 50%, transparent 35%, rgba(40, 12, 18, 0.18) 95%);
     filter: blur(2px);
-    animation: hero-breathe 9s ease-in-out infinite;
+    animation: hero-breathe 8s ease-in-out infinite;
   }
   .hero::after {
     content: '';
@@ -114,13 +115,15 @@
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(circle at 50% 14%, rgba(255, 224, 196, 0.26), transparent 32%),
-      radial-gradient(ellipse 115% 75% at 50% 50%, transparent 48%, rgba(112, 38, 51, 0.11) 100%);
-    mix-blend-mode: soft-light;
+      radial-gradient(circle at 50% 12%, rgba(255, 218, 184, 0.45), transparent 30%),
+      radial-gradient(ellipse 50% 80% at 50% 50%, transparent 0%, transparent 38%, rgba(70, 22, 32, 0.10) 70%, rgba(40, 12, 18, 0.32) 100%),
+      radial-gradient(ellipse 30% 100% at 0% 50%, rgba(40, 12, 18, 0.28), transparent 60%),
+      radial-gradient(ellipse 30% 100% at 100% 50%, rgba(40, 12, 18, 0.28), transparent 60%);
+    mix-blend-mode: multiply;
   }
   @keyframes hero-breathe {
-    0%, 100% { opacity: 0.92; transform: scale(1); }
-    50%      { opacity: 1;    transform: scale(1.015); }
+    0%, 100% { opacity: 0.88; transform: scale(1); }
+    50%      { opacity: 1;    transform: scale(1.03); }
   }
   @media (prefers-reduced-motion: reduce) {
     .hero::before { animation: none; }
