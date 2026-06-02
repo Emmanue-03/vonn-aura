@@ -12,6 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <style>
   :root {
@@ -882,24 +883,42 @@ const DEFAULT_PRODUCTS = [
   { id: 'P-006', name: 'Ember Noir',  family: 'Amaderado · Especias',   price: 205, image: '', status: 'active', gender: 'hombre', intensity: 'eau de parfum', occasion: 'noche', brand: 'Vonn Aura' },
 ];
 
-function loadProducts() {
+// Supabase: cliente público (anon key, seguro de exponer)
+const SUPABASE_URL = 'https://pulsrdcphxoazqtsstdm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_LZklN6B82nexXtsdAvN01g_RZT5A6lo';
+const supabaseClient = (window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
+async function fetchProductsFromSupabase() {
+  if (!supabaseClient) return DEFAULT_PRODUCTS.map(mapAdminProduct);
   try {
-    const raw = localStorage.getItem('vonn_products');
-    const list = raw ? JSON.parse(raw) : DEFAULT_PRODUCTS;
-    return list.map(mapAdminProduct);
-  } catch {
+    const { data, error } = await supabaseClient
+      .from('products')
+      .select('*')
+      .order('id', { ascending: true });
+    if (error) {
+      console.warn('Vonn Aura · Supabase products error:', error.message);
+      return DEFAULT_PRODUCTS.map(mapAdminProduct);
+    }
+    if (!data || data.length === 0) return DEFAULT_PRODUCTS.map(mapAdminProduct);
+    return data.map(mapAdminProduct);
+  } catch (e) {
+    console.warn('Vonn Aura · Supabase fetch failed:', e);
     return DEFAULT_PRODUCTS.map(mapAdminProduct);
   }
 }
 
 function useProducts() {
-  const [list, setList] = useState(loadProducts);
+  // Estado inicial: semilla local mientras carga Supabase (evita flicker vacío)
+  const [list, setList] = useState(() => DEFAULT_PRODUCTS.map(mapAdminProduct));
   useEffect(() => {
-    const onStorage = (e) => { if (!e.key || e.key === 'vonn_products') setList(loadProducts()); };
-    const onFocus = () => setList(loadProducts());
-    window.addEventListener('storage', onStorage);
+    let cancelled = false;
+    const load = () => fetchProductsFromSupabase().then(p => { if (!cancelled) setList(p); });
+    load();
+    const onFocus = () => load();
     window.addEventListener('focus', onFocus);
-    return () => { window.removeEventListener('storage', onStorage); window.removeEventListener('focus', onFocus); };
+    return () => { cancelled = true; window.removeEventListener('focus', onFocus); };
   }, []);
   return list;
 }

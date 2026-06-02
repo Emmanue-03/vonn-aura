@@ -12,6 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <style>
   :root {
@@ -223,6 +224,90 @@
 
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useMemo, useRef } = React;
+
+// -------- SUPABASE --------
+const SUPABASE_URL = 'https://pulsrdcphxoazqtsstdm.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_LZklN6B82nexXtsdAvN01g_RZT5A6lo';
+const supabaseClient = (window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } })
+  : null;
+
+// Sanea producto antes de mandarlo a Supabase (quita columnas server-only y normaliza tipos)
+function sanitizeProductForSupabase(p) {
+  if (!p) return null;
+  const { created_at, updated_at, ...rest } = p;
+  return {
+    id: rest.id,
+    name: rest.name || '',
+    brand: rest.brand || 'Vonn Aura',
+    family: rest.family || null,
+    notes: rest.notes || null,
+    size: rest.size || '100ml',
+    stock: rest.stock != null && rest.stock !== '' ? Number(rest.stock) : null,
+    status: rest.status || 'active',
+    price: Number(rest.price) || 0,
+    image: rest.image || null,
+    images: Array.isArray(rest.images) ? rest.images.filter(Boolean) : (rest.image ? [rest.image] : []),
+    gender: rest.gender || 'unisex',
+    intensity: rest.intensity || 'eau de parfum',
+    occasion: rest.occasion || null,
+    featured: !!rest.featured,
+  };
+}
+
+// Hook que sincroniza productos con Supabase. Mantiene la API [products, setProducts]
+// para no romper los call sites existentes — al hacer setProducts(newArr) diffea
+// contra el estado anterior y aplica INSERT/UPDATE/DELETE en Supabase.
+function useSupabaseProducts() {
+  const [products, setLocal] = useState([]);
+  const productsRef = useRef([]);
+  productsRef.current = products;
+
+  const refresh = async () => {
+    if (!supabaseClient) return;
+    const { data, error } = await supabaseClient.from('products').select('*').order('id');
+    if (error) { console.warn('Supabase products fetch:', error.message); return; }
+    setLocal(data || []);
+  };
+
+  useEffect(() => { refresh(); }, []);
+
+  const setProducts = async (next) => {
+    const newArr = Array.isArray(next) ? next : [];
+    const prev = productsRef.current;
+    setLocal(newArr); // optimistic
+
+    const oldMap = new Map(prev.map(p => [p.id, p]));
+    const newMap = new Map(newArr.map(p => [p.id, p]));
+    if (!supabaseClient) return;
+
+    // Deletes
+    for (const id of oldMap.keys()) {
+      if (!newMap.has(id)) {
+        const { error } = await supabaseClient.from('products').delete().eq('id', id);
+        if (error) console.warn('delete', id, error.message);
+      }
+    }
+    // Inserts y updates
+    for (const [id, p] of newMap) {
+      const payload = sanitizeProductForSupabase(p);
+      if (!oldMap.has(id)) {
+        const { error } = await supabaseClient.from('products').upsert(payload);
+        if (error) console.warn('insert', id, error.message);
+      } else {
+        const before = JSON.stringify(sanitizeProductForSupabase(oldMap.get(id)));
+        const after = JSON.stringify(payload);
+        if (before !== after) {
+          const { error } = await supabaseClient.from('products').update(payload).eq('id', id);
+          if (error) console.warn('update', id, error.message);
+        }
+      }
+    }
+    await refresh();
+  };
+
+  return [products, setProducts];
+}
 
 // -------- STORAGE --------
 const LS = {
@@ -1042,12 +1127,49 @@ function Login({ users, onLogin }) {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [err, setErr] = useState('');
-  const submit = (e) => {
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (e) => {
     e.preventDefault();
-    const u = users.find(x => x.email.toLowerCase() === email.toLowerCase() && x.password === pass);
-    if (!u) { setErr('Credenciales inválidas. Verificá email y contraseña.'); return; }
-    onLogin(u);
+    if (loading) return;
+    setErr(''); setLoading(true);
+
+    if (!supabaseClient) { setErr('Supabase no disponible.'); setLoading(false); return; }
+
+    // 1. Login Supabase Auth
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email: email.trim(), password: pass });
+    if (error || !data?.user) {
+      setErr('Credenciales inválidas. Verificá email y contraseña.');
+      setLoading(false);
+      return;
+    }
+
+    // 2. Verificar rol admin en profiles
+    const { data: profile, error: pErr } = await supabaseClient
+      .from('profiles')
+      .select('id, role, full_name, email')
+      .eq('id', data.user.id)
+      .single();
+
+    if (pErr || !profile || profile.role !== 'admin') {
+      setErr('Tu cuenta no tiene permisos de admin en este atelier.');
+      await supabaseClient.auth.signOut();
+      setLoading(false);
+      return;
+    }
+
+    // 3. Pasar al callback con shape compatible con el state local
+    const name = profile.full_name || data.user.email || 'Admin';
+    onLogin({
+      id: data.user.id,
+      name,
+      email: data.user.email,
+      role: 'Curadora',
+      initials: name.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase(),
+    });
+    setLoading(false);
   };
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, background: 'radial-gradient(circle at 30% 20%, rgba(112,38,51,.08), transparent 60%), var(--color-principal)' }}>
       <div className="panel lg" style={{ maxWidth: 460, width: '100%', padding: 44 }}>
@@ -1056,14 +1178,16 @@ function Login({ users, onLogin }) {
           <small style={{ fontSize: 9, letterSpacing: '.35em', color: 'var(--color-muted)', textTransform: 'uppercase' }}>· Atelier · acceso ·</small>
         </div>
         <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="field"><label>Email</label><input type="email" required value={email} onChange={e => { setEmail(e.target.value); setErr(''); }} placeholder="admin@vonnaura.com" /></div>
+          <div className="field"><label>Email</label><input type="email" required value={email} onChange={e => { setEmail(e.target.value); setErr(''); }} placeholder="vonnaura@admin.test" /></div>
           <div className="field"><label>Contraseña</label><input type="password" required value={pass} onChange={e => { setPass(e.target.value); setErr(''); }} placeholder="••••••••" /></div>
           {err && <div style={{ fontSize: 12, color: 'var(--bad)', padding: '8px 12px', background: 'rgba(163,48,58,.08)', borderRadius: 10, border: '1px solid rgba(163,48,58,.2)' }}>{err}</div>}
-          <button type="submit" className="btn btn-primary" style={{ marginTop: 8, justifyContent: 'center' }}>Entrar al atelier</button>
+          <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: 8, justifyContent: 'center', opacity: loading ? 0.6 : 1 }}>
+            {loading ? 'Verificando…' : 'Entrar al atelier'}
+          </button>
         </form>
         <div style={{ marginTop: 24, padding: 14, background: 'var(--color-soft)', borderRadius: 12, fontSize: 11, color: 'var(--color-muted)', lineHeight: 1.6 }}>
-          <strong style={{ color: 'var(--color-secundario)' }}>Acceso demo:</strong><br/>
-          admin@vonnaura.com · aura2026
+          <strong style={{ color: 'var(--color-secundario)' }}>Acceso:</strong><br/>
+          Tu cuenta de Supabase Auth con rol <code>admin</code> en <code>profiles</code>.
         </div>
       </div>
     </div>
@@ -1259,7 +1383,22 @@ function App() {
   const [view, setView] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toast, setToast] = useToast();
-  const [products, setProducts]   = useStored('vonn_products',  seedProducts);
+  const [products, setProducts]   = useSupabaseProducts();
+
+  // Validar que la sesión local concuerde con la sesión real de Supabase Auth.
+  // Si Supabase no tiene sesión activa, limpiamos la local para forzar re-login.
+  useEffect(() => {
+    if (!supabaseClient) return;
+    let cancelled = false;
+    supabaseClient.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      if (!data?.session && session) setSession(null);
+    });
+    const { data: sub } = supabaseClient.auth.onAuthStateChange((_event, s) => {
+      if (!s) setSession(null);
+    });
+    return () => { cancelled = true; sub?.subscription?.unsubscribe?.(); };
+  }, []);
   const [decants, setDecants]     = useStored('vonn_decants',   seedDecants);
   const [orders, setOrders]       = useStored('vonn_orders',    seedOrders);
   const [customers, setCustomers] = useStored('vonn_customers', seedCustomers);
@@ -1273,8 +1412,13 @@ function App() {
     notif_0: true, notif_1: true, notif_2: false, notif_3: true,
   });
 
-  const current = session ? users.find(u => u.id === session.userId) : null;
-  if (!current) return <Login users={users} onLogin={(u) => setSession({ userId: u.id, since: Date.now() })} />;
+  // current viene de users (seed local) o de session.user (Supabase Auth)
+  const current = session ? (users.find(u => u.id === session.userId) || session.user) : null;
+  if (!current) return <Login users={users} onLogin={(u) => {
+    setSession({ userId: u.id, since: Date.now(), user: u });
+    // Agregar a users si no estaba (para que la lista de admins lo refleje)
+    if (!users.find(x => x.id === u.id)) setUsers([u, ...users]);
+  }} />;
 
   const counts = {
     products: products.length,
@@ -1320,7 +1464,7 @@ function App() {
           <div className="crumbs">Atelier · <strong>{currentLabel}</strong></div>
           <div className="search"><Icon.search/><input placeholder="Buscar perfumes, pedidos, clientes…" /></div>
           <NotificationsBell products={products} decants={decants} orders={orders} subs={subs} go={go} />
-          <UserChip user={current} onLogout={() => { if (confirm('¿Cerrar sesión?')) setSession(null); }} onProfile={() => go('users')} />
+          <UserChip user={current} onLogout={async () => { if (confirm('¿Cerrar sesión?')) { try { await supabaseClient?.auth.signOut(); } catch {} setSession(null); } }} onProfile={() => go('users')} />
         </div>
 
         {view === 'home'       && <Dashboard products={products} decants={decants} orders={orders} customers={customers} subs={subs} go={go} />}
