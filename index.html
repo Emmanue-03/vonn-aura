@@ -661,12 +661,32 @@ const { useState, useEffect, useRef } = React;
 
 function useReveal() {
   useEffect(() => {
-    const els = document.querySelectorAll('.fade-in');
     const io = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } });
     }, { threshold: 0.12 });
-    els.forEach(el => io.observe(el));
-    return () => io.disconnect();
+
+    // Observa cualquier .fade-in actualmente en el DOM
+    const observeAll = (root) => {
+      const list = (root.querySelectorAll ? root.querySelectorAll('.fade-in') : []);
+      list.forEach(el => { if (!el.classList.contains('is-visible')) io.observe(el); });
+    };
+    observeAll(document);
+
+    // Y observa también las que se agreguen después (cards que llegan de Supabase async)
+    const mo = new MutationObserver((muts) => {
+      muts.forEach(m => {
+        m.addedNodes.forEach(n => {
+          if (n.nodeType !== 1) return;
+          if (n.classList && n.classList.contains('fade-in') && !n.classList.contains('is-visible')) {
+            io.observe(n);
+          }
+          observeAll(n);
+        });
+      });
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+
+    return () => { io.disconnect(); mo.disconnect(); };
   }, []);
 }
 
@@ -938,7 +958,7 @@ function Card({ p }) {
   };
   const isOut = p.status === 'out';
   return (
-    <article className="card fade-in">
+    <article className="card">
       <div className="card-head">
         <div className="card-num">N° {p.id}</div>
         {p.tag && <div className="card-tag">{p.tag}</div>}
